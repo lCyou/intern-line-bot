@@ -29,10 +29,12 @@ class WebhookController < ApplicationController
             text: event.message['text']
           }
           client.reply_message(event['replyToken'], message)
-        when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
-          response = client.get_message_content(event.message['id'])
-          tf = Tempfile.open("content")
-          tf.write(response.body)
+        when Line::Bot::Event::MessageType::Location
+          message = {
+            type: 'text',
+            text: "位置情報を受信しました\n緯度: #{event.message['latitude']}\n経度: #{event.message['longitude']}"
+          }
+          client.reply_message(event['replyToken'], message)
         end
       end
     }
