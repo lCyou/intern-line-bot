@@ -24,16 +24,29 @@ class WebhookController < ApplicationController
         order: 4,
         format: 'json'
     })
-    p uri
+    # p uri
     request = Net::HTTP::Get.new(uri)
     response = http.request(request)
-    puts 'END !!'
 
     if response.code == '200'
-        data = JSON.parse(response.body)
-        return data["results"]["shop"].map { |shop| shop["name"] }
+      data = JSON.parse(response.body)
+      columns = []
+      data["results"]["shop"].each do |shop|
+        content = {
+          thumbnailImageUrl: shop["photo"]["mobile"]["l"],
+          title: shop["name"],
+          text: shop["address"],
+          actions: [{
+            type: "uri",
+            label: "詳細を見る",
+            uri: shop["urls"]["pc"]
+          }]
+        }
+        columns.push(content)
+      end
+      return columns
     else
-        return "リクエストが失敗しました。ステータスコード: #{response.code}"
+      return "リクエストが失敗しました。ステータスコード: #{response.code}"
     end
   end
 
@@ -55,12 +68,19 @@ class WebhookController < ApplicationController
             type: 'text',
             text: event.message['text']
           }
+          p message
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Location
           res_text = search_shop(event.message['latitude'], event.message['longitude'])
           message = {
-            type: 'text',
-            text: res_text.to_s
+            "type": "template",
+            "altText": "おすすめのお店情報が届きました！",
+            "template": {
+              "type": "carousel",
+              "columns": res_text,
+              "imageAspectRatio": "rectangle",
+              "imageSize": "cover"
+            }
           }
           client.reply_message(event['replyToken'], message)
         end
