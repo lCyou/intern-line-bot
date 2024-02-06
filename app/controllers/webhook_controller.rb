@@ -38,20 +38,6 @@ class WebhookController < ApplicationController
               "imageSize": "cover"
             }
           }
-          p message
-          client.reply_message(event['replyToken'], message)
-        when Line::Bot::Event::MessageType::Location
-          res_text = search_shop(event.message['latitude'], event.message['longitude'])
-          message = {
-            "type": "template",
-            "altText": "おすすめのお店情報が届きました！",
-            "template": {
-              "type": "carousel",
-              "columns": res_text,
-              "imageAspectRatio": "rectangle",
-              "imageSize": "cover"
-            }
-          }
           client.reply_message(event['replyToken'], message)
         end
       end
