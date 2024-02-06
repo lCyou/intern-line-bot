@@ -17,11 +17,14 @@ class WebhookController < ApplicationController
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
+          text = "飲み会中の会話に困ったときトークテーマを提供します！\n「話題」とか「トークテーマ」で送ってみてね！"
+          if event.message['text'].include?("題") || event.message['text'].include?("テーマ") then
+            text = combine_word
+          end
           message = {
             type: 'text',
-            text: event.message['text']
+            text: text
           }
-          p message
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Location
           res_text = search_shop(event.message['latitude'], event.message['longitude'])
@@ -55,7 +58,7 @@ class WebhookController < ApplicationController
 
   
   def search_shop(lat, lng)
-    uri = URI.parse(hotpepper_api)
+    uri = URI.parse("http://webservice.recruit.co.jp/hotpepper/gourmet/v1/")
     http = Net::HTTP.new(uri.host, uri.port) 
     # hotpepper apiのパラメータ
     # range 3: 1000m以内
@@ -71,7 +74,7 @@ class WebhookController < ApplicationController
         order: 4,
         format: 'json'
     })
-    # p uri
+
     request = Net::HTTP::Get.new(uri)
     response = http.request(request)
 
@@ -96,5 +99,13 @@ class WebhookController < ApplicationController
       p "リクエストが失敗しました。ステータスコード: #{response.code}"
     end
   end
+  
+  def combine_word
+    five_w = ["いつ", "どこで", "なぜ", "どのように"]
+    object_word = ["食べ物を", "飲み物を", "スポーツを", "趣味を", "仕事を", "恋愛を", "家族を", "友達を", "学校を", "旅行を"]
+    varb_word = [ "しますか", "見ますか", "聞きますか", "話しますか", "考えますか", "感じますか"]
+    five_w.sample + object_word.sample + varb_word.sample
+  end
+
 
 end
