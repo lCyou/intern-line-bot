@@ -55,7 +55,7 @@ class WebhookController < ApplicationController
 
   
   def search_shop(lat, lng)
-    uri = URI.parse(hotpepper_api)
+    uri = URI.parse("http://webservice.recruit.co.jp/hotpepper/gourmet/v1/")
     http = Net::HTTP.new(uri.host, uri.port) 
     # hotpepper apiのパラメータ
     # range 3: 1000m以内
@@ -71,7 +71,7 @@ class WebhookController < ApplicationController
         order: 4,
         format: 'json'
     })
-    # p uri
+
     request = Net::HTTP::Get.new(uri)
     response = http.request(request)
 
