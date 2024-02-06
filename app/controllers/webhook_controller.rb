@@ -10,6 +10,33 @@ class WebhookController < ApplicationController
     }
   end
 
+  def search_shop(lat, lng)
+    hotpepper_api = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
+    uri = URI.parse(hotpepper_api)
+    http = Net::HTTP.new(uri.host, uri.port) 
+    uri.query = URI.encode_www_form({
+        key: ENV["API_KEY"],
+        lat: lat,
+        lng: lng,
+        range: 3,
+        genre: "G001,G002",
+        budget: "B002,B003",
+        order: 4,
+        format: 'json'
+    })
+    p uri
+    request = Net::HTTP::Get.new(uri)
+    response = http.request(request)
+    puts 'END !!'
+
+    if response.code == '200'
+        data = JSON.parse(response.body)
+        return data["results"]["shop"].map { |shop| shop["name"] }
+    else
+        return "リクエストが失敗しました。ステータスコード: #{response.code}"
+    end
+  end
+
   def callback
     body = request.body.read
 
@@ -29,10 +56,13 @@ class WebhookController < ApplicationController
             text: event.message['text']
           }
           client.reply_message(event['replyToken'], message)
-        when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
-          response = client.get_message_content(event.message['id'])
-          tf = Tempfile.open("content")
-          tf.write(response.body)
+        when Line::Bot::Event::MessageType::Location
+          res_text = search_shop(event.message['latitude'], event.message['longitude'])
+          message = {
+            type: 'text',
+            text: res_text.to_s
+          }
+          client.reply_message(event['replyToken'], message)
         end
       end
     }
