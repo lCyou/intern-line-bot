@@ -3,13 +3,6 @@ require 'line/bot'
 class WebhookController < ApplicationController
   protect_from_forgery except: [:callback] # CSRF対策無効化
 
-  def client
-    @client ||= Line::Bot::Client.new { |config|
-      config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
-      config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
-    }
-  end
-
   def callback
     body = request.body.read
 
@@ -45,6 +38,20 @@ class WebhookController < ApplicationController
               "imageSize": "cover"
             }
           }
+          p message
+          client.reply_message(event['replyToken'], message)
+        when Line::Bot::Event::MessageType::Location
+          res_text = search_shop(event.message['latitude'], event.message['longitude'])
+          message = {
+            "type": "template",
+            "altText": "おすすめのお店情報が届きました！",
+            "template": {
+              "type": "carousel",
+              "columns": res_text,
+              "imageAspectRatio": "rectangle",
+              "imageSize": "cover"
+            }
+          }
           client.reply_message(event['replyToken'], message)
         end
       end
@@ -65,7 +72,7 @@ class WebhookController < ApplicationController
 
   
   def search_shop(lat, lng)
-    uri = URI.parse(hotpepper_api)
+    uri = URI.parse("http://webservice.recruit.co.jp/hotpepper/gourmet/v1/")
     http = Net::HTTP.new(uri.host, uri.port) 
     # hotpepper apiのパラメータ
     # range 3: 1000m以内
@@ -81,7 +88,7 @@ class WebhookController < ApplicationController
         order: 4,
         format: 'json'
     })
-    # p uri
+
     request = Net::HTTP::Get.new(uri)
     response = http.request(request)
 
@@ -106,7 +113,6 @@ class WebhookController < ApplicationController
       p "リクエストが失敗しました。ステータスコード: #{response.code}"
     end
   end
-
   
   def combine_word
     five_w = ["いつ", "どこで", "なぜ", "どのように"]
@@ -114,5 +120,6 @@ class WebhookController < ApplicationController
     varb_word = [ "しますか", "見ますか", "聞きますか", "話しますか", "考えますか", "感じますか"]
     five_w.sample + object_word.sample + varb_word.sample
   end
+
 
 end
