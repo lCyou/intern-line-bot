@@ -44,7 +44,7 @@ class WebhookController < ApplicationController
 
 
   private
-  hotpepper_api = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
+  hotpepper_api = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/".freeze
 
   def client
     @client ||= Line::Bot::Client.new { |config|
@@ -91,9 +91,9 @@ class WebhookController < ApplicationController
         }
         columns.push(content)
       end
-      return columns
+      columns
     else
-      return "リクエストが失敗しました。ステータスコード: #{response.code}"
+      p "リクエストが失敗しました。ステータスコード: #{response.code}"
     end
   end
 
